@@ -1,8 +1,8 @@
-use encdr::{Encdr, EncdrConfig, Event};
+use encdr::{Encdr, EncdrConfig, Event, LedValue};
 use midir::{MidiOutput, MidiOutputConnection};
 use midir::os::unix::VirtualOutput;
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 fn main() {
     let midi = MidiOutput::new("Maschine MK2")
@@ -26,15 +26,49 @@ fn main() {
     }).expect("Maschine MK2 introuvable");
 
     let events = encdr.events().clone();
+    
+    // Allumer les 16 pads en bleu au démarrage
+	for i in 1..=16 {
+    let pad_name = format!("pad_{}", i);
+
+    encdr.set_led(
+        device_id,
+        &pad_name,
+        LedValue::Rgb {
+		r: 255,
+		g: 0,
+		b: 0,
+},
+    );
+}
 
     println!("Maschine MK2 connectee !");
     println!("Port MIDI virtuel cree.");
     println!("Appuyez sur les pads. Ctrl+C pour quitter."); 
     let mut valeurs_cc = [64i32; 8];
     let mut volume_midi = 100i32;
-
+	let mut last_led_update = Instant::now();
     
     loop {
+        
+        if last_led_update.elapsed() >= Duration::from_millis(30) {
+    last_led_update = Instant::now();
+
+		for i in 1..=16 {
+        let pad_name = format!("pad_{}", i);
+
+        encdr.set_led(
+            device_id,
+            &pad_name,
+            LedValue::Rgb {
+			r: 255,
+			g: 0,
+			b: 0,
+},
+        );
+    }
+}
+        
         while let Ok(event) = events.try_recv() {
             
             if let Event::EncoderFine { name, delta, .. } = &event {
