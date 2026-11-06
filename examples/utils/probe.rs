@@ -1,8 +1,13 @@
-use encdr::{Encdr, EncdrConfig};
+use encdr::{Encdr, EncdrConfig, Event};
 
 fn main() {
     // Initialize with defaults (loads built-in descriptors)
-    let encdr = Encdr::new(EncdrConfig::default()).expect("Failed to initialize encdr");
+    let config = EncdrConfig {
+
+				auto_hotplug: false,
+				..EncdrConfig::default()
+};
+let encdr = Encdr::new(config).expect("failed to initialize encdr");
 
     println!("=== Encdr Device Probe ===\n");
 
@@ -11,6 +16,8 @@ fn main() {
     println!("Loaded {} device descriptor(s):\n", descriptors.len());
 
     for desc in &descriptors {
+
+	println!("DEBUG ID : {:04x}:{:04x}", desc.vendor_id.0, desc.product_id.0);
         println!("  {} ({})", desc.name, desc.manufacturer);
         println!(
             "    VID:PID = {:04x}:{:04x}",
@@ -111,6 +118,19 @@ fn main() {
         }
         Err(e) => {
             println!("  Scan error: {}", e);
+        }
+    }
+    println!("\n--- Écoute des événements ---");
+    println!("Appuie sur les boutons ou les pads de la Maschine.");
+    println!("Ctrl+C pour quitter.\n");
+
+    loop {
+        match encdr.events().recv() {
+            Ok(event) => println!("Événement reçu : {:?}", event),
+            Err(e) => {
+                eprintln!("Erreur de réception : {}", e);
+                break;
+            }
         }
     }
 }

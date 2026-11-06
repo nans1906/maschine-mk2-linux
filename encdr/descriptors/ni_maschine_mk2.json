@@ -7,17 +7,17 @@
   "interfaces": [
     {
       "id": "control",
-      "number": 0,
+      "number": 2,
       "endpoints": {
-        "in":  { "address": "0x81", "type": "interrupt" },
-        "out": { "address": "0x01", "type": "interrupt" }
+        "in":  { "address": "0x82", "type": "interrupt" },
+        "out": { "address": "0x02", "type": "interrupt" }
       }
     },
     {
       "id": "screen",
-      "number": 0,
+      "number": 1,
       "endpoints": {
-        "out": { "address": "0x01", "type": "interrupt" }
+        "out": { "address": "0x01", "type": "bulk" }
       }
     }
   ],
@@ -82,14 +82,14 @@
         { "type": "button", "name": "pattern",           "byte": 6,  "mask": "0x40" },
         { "type": "button", "name": "scene",             "byte": 6,  "mask": "0x80" },
 
-        { "type": "encoder_fine", "name": "screen_encoder_1", "bytes": [8, 9],   "encoding": "signed16" },
-        { "type": "encoder_fine", "name": "screen_encoder_2", "bytes": [10, 11], "encoding": "signed16" },
-        { "type": "encoder_fine", "name": "screen_encoder_3", "bytes": [12, 13], "encoding": "signed16" },
-        { "type": "encoder_fine", "name": "screen_encoder_4", "bytes": [14, 15], "encoding": "signed16" },
-        { "type": "encoder_fine", "name": "screen_encoder_5", "bytes": [16, 17], "encoding": "signed16" },
-        { "type": "encoder_fine", "name": "screen_encoder_6", "bytes": [18, 19], "encoding": "signed16" },
-        { "type": "encoder_fine", "name": "screen_encoder_7", "bytes": [20, 21], "encoding": "signed16" },
-        { "type": "encoder_fine", "name": "screen_encoder_8", "bytes": [22, 23], "encoding": "signed16" }
+        { "type": "encoder_fine", "name": "screen_encoder_1", "bytes": [8, 9],   "encoding": "wrap16_wide" },
+        { "type": "encoder_fine", "name": "screen_encoder_2", "bytes": [10, 11], "encoding": "wrap16_wide" },
+        { "type": "encoder_fine", "name": "screen_encoder_3", "bytes": [12, 13], "encoding": "wrap16_wide" },
+        { "type": "encoder_fine", "name": "screen_encoder_4", "bytes": [14, 15], "encoding": "wrap16_wide" },
+        { "type": "encoder_fine", "name": "screen_encoder_5", "bytes": [16, 17], "encoding": "wrap16_wide" },
+        { "type": "encoder_fine", "name": "screen_encoder_6", "bytes": [18, 19], "encoding": "wrap16_wide" },
+        { "type": "encoder_fine", "name": "screen_encoder_7", "bytes": [20, 21], "encoding": "wrap16_wide" },
+        { "type": "encoder_fine", "name": "screen_encoder_8", "bytes": [22, 23], "encoding": "wrap16_wide" }
       ]
     },
     {

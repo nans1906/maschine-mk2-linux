@@ -174,7 +174,8 @@ impl PacketParser {
                             });
                         }
                     }
-                    InputItemDesc::Encoder(e) => {
+                    InputItemDesc::
+Encoder(e) => {
                         encoder_states.insert(e.name.clone(), EncoderState::default());
                     }
                     InputItemDesc::EncoderFine(e) => {
@@ -1119,7 +1120,7 @@ impl PacketParser {
                     if let Some(enc_state) = state.fine_encoder_states.get_mut(&desc.name) {
                         match desc.encoding {
                             EncoderEncoding::Signed16 => {
-                                if let Some(raw_delta) = enc_state.update_signed16(val) {
+if let Some(raw_delta) = enc_state.update_signed16(val) {
                                     if active {
                                         let delta = raw_delta / desc.scale;
                                         if let Some(&name) = names.get(&desc.name) {

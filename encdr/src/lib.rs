@@ -173,6 +173,7 @@ impl Encdr {
         }
 
         for det in detected {
+                connected.push(det.device_id);
             if devs.contains_key(&det.device_id) && devs.get(&det.device_id).unwrap().is_connected() {
                 continue; // Already connected
             }
@@ -830,6 +831,7 @@ fn run_hotplug_monitor(
         // 2. Scan connected USB devices:
         let reg = registry.read().unwrap();
         let detected = hotplug::scan_devices(&reg);
+
         let active_filter = filter.read().unwrap().clone();
         drop(reg);
 

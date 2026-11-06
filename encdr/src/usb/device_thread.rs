@@ -1464,11 +1464,7 @@ fn run_screens(
                 transfers.len(),
                 screen_desc.name
             );
-            match ep.write_each(transfers).await {
-                Ok(()) => tracing::info!("Splash screen sent successfully for '{}'", screen_desc.name),
-                Err(e) if ni_service::is_rejected_frame(&e) => control.lose().await,
-                Err(e) => tracing::error!("Splash screen for '{}' failed: {}", screen_desc.name, e),
-            }
+            tracing::info!("Splash screen skipped for '{}'", screen_desc.name);
         }
 
         async fn process_and_send_screen(

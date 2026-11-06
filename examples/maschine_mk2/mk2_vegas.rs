@@ -38,7 +38,10 @@ fn main() {
     println!("╚══════════════════════════════════════════════════════════════╝");
     println!("Scanning for connected devices...\n");
 
-    let mut encdr = Encdr::new(EncdrConfig::default()).expect("Failed to initialize encdr");
+let mut encdr = Encdr::new(EncdrConfig {
+    auto_hotplug: false,
+    ..EncdrConfig::default()
+}).expect("Failed to initialize encdr");
     let ids = encdr.scan().expect("Scan failed");
 
     let device_id = ids.into_iter().find(|&id| {
