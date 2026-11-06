@@ -32,6 +32,8 @@ fn main() {
     println!("Appuyez sur les pads. Ctrl+C pour quitter."); 
     let mut valeurs_cc = [64i32; 8];
     let mut volume_midi = 100i32;
+
+    
     loop {
         while let Ok(event) = events.try_recv() {
             
@@ -86,6 +88,16 @@ if *name == "screen_encoder_1" && delta.abs() == 1.0 {
 }
             
             if let Event::Button { name, pressed, .. } = event {
+				if name == "volume" {
+				let valeur = if pressed { 127 } else { 0 };
+				let message = [0xB0, 64, valeur];
+
+				if let Err(e) = connexion.send(&message) {
+				eprintln!("Erreur MIDI sustain : {}", e);
+    }
+
+					println!("SUSTAIN : CC64 = {}", valeur);
+}
                 if let Some(numero) = name.strip_prefix("pad_") {
                     if let Ok(pad) = numero.parse::<u8>() {
                         if (1..=16).contains(&pad) && pad != 14 {
