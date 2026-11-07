@@ -855,24 +855,32 @@
   "screens": [
     {
       "name": "left",
-      "interface": "screen",
+      "interface": "control",
       "width": 256,
       "height": 64,
       "pixel_format": "mono",
       "full_blit": {
-        "header": "0xe0",
+        "header": "",
         "footer": ""
+      },
+      "protocol": {
+        "type": "ni_maschine_mk2",
+        "display": 0
       }
     },
     {
       "name": "right",
-      "interface": "screen",
+      "interface": "control",
       "width": 256,
       "height": 64,
       "pixel_format": "mono",
       "full_blit": {
-        "header": "0xe1",
+        "header": "",
         "footer": ""
+      },
+      "protocol": {
+        "type": "ni_maschine_mk2",
+        "display": 1
       }
     }
   ],

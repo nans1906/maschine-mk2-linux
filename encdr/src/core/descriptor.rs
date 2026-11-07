@@ -510,6 +510,10 @@ pub enum ScreenProtocol {
     /// page-formatted data bytes.
     NiMikroMk2,
 
+    /// NI Maschine Mk2: dual 256x64 monochrome HID displays.
+    /// Eight 265-byte reports per screen, IDs E0 (left) and E1 (right).
+    NiMaschineMk2 { display: u8 },
+
     /// Native Instruments color screen command stream with RLE compression
     /// (Maschine MK3, Maschine+, Komplete Kontrol S49/S61/S88 MK2, Traktor S8/S5/D2/S4 MK3).
     /// Framing: 16-byte header `[0x84, 0x00, display, 0x60, 0,0,0,0, x_be, y_be, w_be, h_be]`,

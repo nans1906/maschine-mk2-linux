@@ -14,7 +14,7 @@ pub struct InitStep {
 pub fn init_sequence(desc: &ScreenDesc) -> Vec<InitStep> {
     match desc.protocol {
         Some(ScreenProtocol::NiSt7529 { display }) => st7529_init(display),
-        Some(ScreenProtocol::NiMikroMk2) | Some(ScreenProtocol::NiColorRle { .. }) | None => Vec::new(),
+        Some(ScreenProtocol::NiMikroMk2) | Some(ScreenProtocol::NiMaschineMk2 { .. }) | Some(ScreenProtocol::NiColorRle { .. }) | None => Vec::new(),
     }
 }
 
@@ -24,8 +24,44 @@ pub fn frame_transfers(desc: &ScreenDesc, blit: Vec<u8>) -> Vec<Vec<u8>> {
     match desc.protocol {
         Some(ScreenProtocol::NiSt7529 { display }) => st7529_frame(display, desc, &blit),
         Some(ScreenProtocol::NiMikroMk2) => mikro_mk2_frame(desc, &blit),
+        Some(ScreenProtocol::NiMaschineMk2 { display }) => maschine_mk2_frame(display, &blit),
         Some(ScreenProtocol::NiColorRle { .. }) | None => vec![blit],
     }
+}
+
+// ── NI Maschine Mk2 dual 256x64 monochrome HID displays ────────────────
+//
+// Eight reports per screen, each containing:
+// report ID (E0/E1), 8-byte header, 256 pixel bytes.
+
+fn maschine_mk2_frame(display: u8, blit: &[u8]) -> Vec<Vec<u8>> {
+    let mono = if blit.len() > 2048 {
+        &blit[blit.len() - 2048..]
+    } else {
+        blit
+    };
+
+    let mut transfers = Vec::with_capacity(8);
+
+    for band in 0..8usize {
+        let mut report = Vec::with_capacity(265);
+        report.extend_from_slice(&[
+            0xE0 + display,
+            0x00, 0x00,
+            (band * 8) as u8,
+            0x00, 0x20,
+            0x00, 0x08,
+            0x00,
+        ]);
+
+        for i in 0..256usize {
+            report.push(*mono.get(band * 256 + i).unwrap_or(&0));
+        }
+
+        transfers.push(report);
+    }
+
+    transfers
 }
 
 // ── NI Maschine Mikro Mk2 128x64 Monochrome Display ──────────────────────────
