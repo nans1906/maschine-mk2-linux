@@ -756,6 +756,9 @@ fn run_device(
                     };
                     match outcome {
                         Ok(data) => {
+                        if data.len() == 25 && descriptor.name == "NI Maschine Mk2" {
+                            println!("MK2 RAW: {:02X?}", data);
+                        }
                             let active = has_control.load(Ordering::Relaxed) && is_connected.load(Ordering::Relaxed);
                             tracing::trace!(
                                 "USB RECV [len={}, active={}] header={:02x?}",

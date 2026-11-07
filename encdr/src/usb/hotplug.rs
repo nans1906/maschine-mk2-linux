@@ -267,16 +267,13 @@ pub fn scan_devices(registry: &DescriptorRegistry) -> Vec<DetectedDevice> {
         }
     };
 
-		println!("DEBUG REGISTRE ! {:?}", registry.known_ids());
 
     for info in devices {
 
-		println!("usb detecté : {:04x}:{:04x}", info.vendor_id(), info.product_id());
 
         let vid = info.vendor_id();
         let pid = info.product_id();
 
-        	println!("DEBUG RECHERCHE : {:04x}:{:04x} => {:?}", vid, pid, registry.find(vid, pid).map(|d| d.name.as_str()));
 		if let Some(desc) = registry.find(vid, pid) {
             #[cfg(target_os = "linux")]
             let bus = info.busnum();
@@ -297,7 +294,6 @@ pub fn scan_devices(registry: &DescriptorRegistry) -> Vec<DetectedDevice> {
         }
     }
 
-	println!("DEBUG FIN : {} périphérique trouvé", found.len());
 
     found
 }

@@ -231,3 +231,23 @@ name = "mk2_midi"
 path = "maschine_mk2/mk2_midi.rs"
 
 
+
+[[bin]]
+name = "mk2_midi_velocity"
+path = "maschine_mk2/mk2_midi_velocity.rs"
+
+[[bin]]
+name = "mk2_midi_transport"
+path = "maschine_mk2/mk2_midi_transport.rs"
+
+[[bin]]
+name = "mk2_led_test"
+path = "maschine_mk2/mk2_led_test.rs"
+
+[[bin]]
+name = "mk2_rgb_test"
+path = "maschine_mk2/mk2_rgb_test.rs"
+
+[[bin]]
+name = "mk2_led_bridge"
+path = "maschine_mk2/mk2_led_bridge.rs"
