@@ -338,7 +338,7 @@ fn run_device(
             failed_nums.insert(num);
         }
         if !claimed_by_num.contains_key(&num) && !failed_nums.contains(&num) {
-            match claim_interface(&usb_device, &hid_target, &descriptor, iface_desc, force_hid) {
+            match claim_interface(&usb_device, &hid_target, &descriptor, iface_desc, force_hid || descriptor.quirks.prefer_hid) {
                 Ok(iface) => {
                     claimed_by_num.insert(num, iface);
                 }

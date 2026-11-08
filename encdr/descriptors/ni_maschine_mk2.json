@@ -885,6 +885,7 @@
     }
   ],
   "quirks": {
-    "detach_kernel_driver": true
+    "detach_kernel_driver": true,
+    "prefer_hid": true
   }
 }

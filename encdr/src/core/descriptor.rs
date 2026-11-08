@@ -582,6 +582,9 @@ pub struct QuirksDesc {
     pub dual_handle: bool,
     #[serde(default)]
     pub detach_kernel_driver: bool,
+    /// Prefer the HID backend for HID-compatible interfaces.
+    #[serde(default)]
+    pub prefer_hid: bool,
     #[serde(default)]
     pub touchstrip: Option<TouchstripQuirksDesc>,
     #[serde(default)]
