@@ -229,49 +229,49 @@
         },
         {
           "type": "button",
-          "name": "shift",
+          "name": "restart",
           "byte": 5,
           "mask": "0x01"
         },
         {
           "type": "button",
-          "name": "erase",
+          "name": "step_left",
           "byte": 5,
           "mask": "0x02"
         },
         {
           "type": "button",
-          "name": "rec",
+          "name": "step_right",
           "byte": 5,
           "mask": "0x04"
         },
         {
           "type": "button",
-          "name": "play",
+          "name": "grid",
           "byte": 5,
           "mask": "0x08"
         },
         {
           "type": "button",
-          "name": "grid",
+          "name": "play",
           "byte": 5,
           "mask": "0x10"
         },
         {
           "type": "button",
-          "name": "step_right",
+          "name": "rec",
           "byte": 5,
           "mask": "0x20"
         },
         {
           "type": "button",
-          "name": "step_left",
+          "name": "erase",
           "byte": 5,
           "mask": "0x40"
         },
         {
           "type": "button",
-          "name": "restart",
+          "name": "shift",
           "byte": 5,
           "mask": "0x80"
         },
@@ -811,32 +811,32 @@
         },
         {
           "type": "single",
-          "name": "restart",
+          "name": "step_left",
           "offset": 49
         },
         {
           "type": "single",
-          "name": "step_left",
+          "name": "step_right",
           "offset": 50
         },
         {
           "type": "single",
-          "name": "step_right",
+          "name": "grid",
           "offset": 51
         },
         {
           "type": "single",
-          "name": "grid",
+          "name": "play",
           "offset": 52
         },
         {
           "type": "single",
-          "name": "play",
+          "name": "rec",
           "offset": 53
         },
         {
           "type": "single",
-          "name": "rec",
+          "name": "erase",
           "offset": 54
         },
         {
@@ -846,7 +846,7 @@
         },
         {
           "type": "single",
-          "name": "erase",
+          "name": "restart_unused",
           "offset": 56
         }
       ]

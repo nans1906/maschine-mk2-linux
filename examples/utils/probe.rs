@@ -1,4 +1,4 @@
-use encdr::{Encdr, EncdrConfig, Event};
+use encdr::{Encdr, EncdrConfig};
 
 fn main() {
     // Initialize with defaults (loads built-in descriptors)

@@ -251,3 +251,8 @@ path = "maschine_mk2/mk2_rgb_test.rs"
 [[bin]]
 name = "mk2_led_bridge"
 path = "maschine_mk2/mk2_led_bridge.rs"
+
+# Menu interactif Maschine MK2
+[[bin]]
+name = "mk2_interactive_menu"
+path = "maschine_mk2/mk2_interactive_menu.rs"
