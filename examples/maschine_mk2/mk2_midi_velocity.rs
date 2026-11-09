@@ -133,7 +133,7 @@ fn main() {
                     if let Ok(pad) = numero.parse::<u8>() {
                         if (1..=16).contains(&pad) && pad != 14 {
                             let i = (pad - 1) as usize;
-                            let note = 35 + pad;
+                            let note = 59 + pad;
 
                             if pressed {
                                 if frappes[i].is_none() && !notes_actives[i] {
@@ -173,7 +173,7 @@ fn main() {
             if let Some((debut, maximum)) = frappes[i] {
                 if debut.elapsed() >= Duration::from_millis(8) {
                     let velocite = (maximum * 300.0).round().clamp(1.0, 127.0) as u8;
-                    let note = 36 + i as u8;
+                    let note = 60 + i as u8;
 
                     if let Err(e) = connexion.send(&[0x90, note, velocite]) {
                         eprintln!("Erreur MIDI : {}", e);

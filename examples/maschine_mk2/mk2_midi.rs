@@ -45,6 +45,9 @@ fn main() {
     println!("Maschine MK2 connectee !");
     println!("Port MIDI virtuel cree.");
     println!("Appuyez sur les pads. Ctrl+C pour quitter."); 
+    let mut frappes: [Option<(Instant, f32)>; 16] = [None; 16];
+    let mut notes_actives = [false; 16];
+
     let mut valeurs_cc = [64i32; 8];
     let mut volume_midi = 100i32;
 	let mut last_led_update = Instant::now();
@@ -70,6 +73,38 @@ fn main() {
 }
         
         while let Ok(event) = events.try_recv() {
+
+            // Mesurer la pression maximale pendant chaque frappe
+            if let Event::Grid { name, pressure, .. } = &event {
+                if let Some(numero) = name.strip_prefix("pad_") {
+                    if let Ok(pad) = numero.parse::<usize>() {
+                        if (1..=16).contains(&pad) && pad != 14 {
+                            let i = pad - 1;
+
+                            if let Some((_, maximum)) = frappes[i].as_mut() {
+                                *maximum = (*maximum).max(*pressure);
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            // Mesurer la pression maximale pendant chaque frappe
+            if let Event::Grid { name, pressure, .. } = &event {
+                if let Some(numero) = name.strip_prefix("pad_") {
+                    if let Ok(pad) = numero.parse::<usize>() {
+                        if (1..=16).contains(&pad) && pad != 14 {
+                            let i = pad - 1;
+
+                            if let Some((_, maximum)) = frappes[i].as_mut() {
+                                *maximum = (*maximum).max(*pressure);
+                            }
+                        }
+                    }
+                }
+            }
+
             
             if let Event::EncoderFine { name, delta, .. } = &event {
 			// Gros potentiometre VOLUME : variations de +1 ou -1
@@ -91,8 +126,8 @@ if *name == "screen_encoder_1" && delta.abs() == 1.0 {
                 let i = index - 1;
 
 // Ignore les petites variations parasites
-                if delta.abs() >= 256.0 {
-                    let pas = (*delta / 1024.0).round() as i32;
+                if delta.abs() >= 1.0 {
+                    let pas = delta.signum() as i32;
 
                     if pas != 0 {
                         valeurs_cc[i] = (valeurs_cc[i] + pas).clamp(0, 127);
@@ -136,23 +171,51 @@ if *name == "screen_encoder_1" && delta.abs() == 1.0 {
                     if let Ok(pad) = numero.parse::<u8>() {
                         if (1..=16).contains(&pad) && pad != 14 {
                             let note = 35 + pad;
-                            let message = if pressed {
-                                [0x90, note, 100]
+                            let i = (pad - 1) as usize;
+
+                            if pressed {
+                                if frappes[i].is_none() && !notes_actives[i] {
+                                    frappes[i] = Some((Instant::now(), 0.0));
+                                }
                             } else {
-                                [0x80, note, 0]
-                            };
-
-                            if let Err(e) = connexion.send(&message) {
-                                eprintln!("Erreur MIDI : {}", e);
+                                if frappes[i].is_some() || notes_actives[i] {
+                                    if let Err(e) = connexion.send(&[0x80, note, 0]) {
+                                        eprintln!("Erreur MIDI : {}", e);
+                                    }
+                                }
+                                frappes[i] = None;
+                                notes_actives[i] = false;
                             }
-
-                            println!(
-                                "Pad {} : note {} {}",
-                                pad,
-                                note,
-                                if pressed { "ON" } else { "OFF" }
-                            );
                         }
+                    }
+                }
+            }
+        }
+
+        // Declencher les notes apres 8 ms de mesure de pression
+        for i in 0..16 {
+            // Le pad 14 est physiquement defectueux
+            if i == 13 || notes_actives[i] {
+                continue;
+            }
+
+            if let Some((debut, maximum)) = frappes[i] {
+                if debut.elapsed() >= Duration::from_millis(8) {
+                    let velocite =
+                        (maximum * 300.0).round().clamp(1.0, 127.0) as u8;
+
+                    let note = 36 + i as u8;
+
+                    if let Err(e) = connexion.send(&[0x90, note, velocite]) {
+                        eprintln!("Erreur MIDI : {}", e);
+                    } else {
+                        notes_actives[i] = true;
+                        println!(
+                            "Pad {} : note {} velocite {}",
+                            i + 1,
+                            note,
+                            velocite
+                        );
                     }
                 }
             }
