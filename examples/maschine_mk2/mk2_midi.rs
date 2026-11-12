@@ -1,3 +1,13 @@
+// Maschine MK2 Linux MIDI Controller
+//
+// Based on Encdr, developed by Rufus White.
+// Original project: https://github.com/RufusIbiza/Encdr
+//
+// Encdr Copyright (C) 2026 Rufus White
+// Licensed under GNU GPL v3.0 or later (GPL-3.0-or-later).
+//
+// MIDI adaptation for the Native Instruments Maschine MK2.
+
 use encdr::{Encdr, EncdrConfig, Event, LedValue};
 use midir::{MidiOutput, MidiOutputConnection};
 use midir::os::unix::VirtualOutput;
@@ -47,6 +57,17 @@ fn main() {
     println!("Appuyez sur les pads. Ctrl+C pour quitter."); 
     let mut frappes: [Option<(Instant, f32)>; 16] = [None; 16];
     let mut notes_actives = [false; 16];
+
+    // Groupes A a H : decalages en demi-tons
+    let decalages_groupes: [i16; 8] = [
+        0, 12, 24, 36, -12, -24, -36, 48
+    ];
+
+    // Groupe A selectionne au demarrage
+    let mut groupe_actif: usize = 0;
+
+    // Memoriser la note MIDI jouee par chaque pad
+    let mut notes_jouees: [Option<u8>; 16] = [None; 16];
 
     let mut valeurs_cc = [64i32; 8];
     let mut volume_midi = 100i32;
@@ -157,6 +178,22 @@ if *name == "screen_encoder_1" && delta.abs() == 1.0 {
 }
             
             if let Event::Button { name, pressed, .. } = event {
+
+                // Selection des groupes A a H
+                if pressed {
+                    if let Some(lettre) = name.strip_prefix("group_") {
+                        if let Some(index) = "abcdefgh".find(lettre) {
+                            groupe_actif = index;
+
+                            println!(
+                                "Groupe {} selectionne : transposition {} demi-tons",
+                                lettre.to_uppercase(),
+                                decalages_groupes[groupe_actif]
+                            );
+                        }
+                    }
+                }
+
 				if name == "volume" {
 				let valeur = if pressed { 127 } else { 0 };
 				let message = [0xB0, 64, valeur];
@@ -170,25 +207,26 @@ if *name == "screen_encoder_1" && delta.abs() == 1.0 {
                 if let Some(numero) = name.strip_prefix("pad_") {
                     if let Ok(pad) = numero.parse::<u8>() {
                         if (1..=16).contains(&pad) && pad != 14 {
-                            let note = 35 + pad;
                             let i = (pad - 1) as usize;
 
-                            if pressed {
-                                if frappes[i].is_none() && !notes_actives[i] {
-                                    frappes[i] = Some((Instant::now(), 0.0));
-                                }
-                            } else {
-                                if frappes[i].is_some() || notes_actives[i] {
-                                    if let Err(e) = connexion.send(&[0x80, note, 0]) {
-                                        eprintln!("Erreur MIDI : {}", e);
-                                    }
-                                }
-                                frappes[i] = None;
-                                notes_actives[i] = false;
+                           if pressed {
+                               if frappes[i].is_none() && !notes_actives[i] {
+                                   frappes[i] = Some((Instant::now(), 0.0));
+                               }
+                           } else {
+                               if let Some(note) = notes_jouees[i] {
+                                   if let Err(e) = connexion.send(&[0x80, note, 0]) {
+                                       eprintln!("Erreur MIDI : {}", e);
+                                   }
+                               }
+
+                               frappes[i] = None;
+                               notes_actives[i] = false;
+                               notes_jouees[i] = None;
+                           }
                             }
                         }
                     }
-                }
             }
         }
 
@@ -204,12 +242,14 @@ if *name == "screen_encoder_1" && delta.abs() == 1.0 {
                     let velocite =
                         (maximum * 300.0).round().clamp(1.0, 127.0) as u8;
 
-                    let note = 36 + i as u8;
+                    let note = (36i16 + i as i16
+                        + decalages_groupes[groupe_actif]) as u8;
 
                     if let Err(e) = connexion.send(&[0x90, note, velocite]) {
                         eprintln!("Erreur MIDI : {}", e);
                     } else {
                         notes_actives[i] = true;
+                        notes_jouees[i] = Some(note);
                         println!(
                             "Pad {} : note {} velocite {}",
                             i + 1,
