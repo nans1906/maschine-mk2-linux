@@ -8,11 +8,50 @@
 //
 // MIDI adaptation for the Native Instruments Maschine MK2.
 
-use encdr::{Encdr, EncdrConfig, Event, LedValue};
+use encdr::{Encdr, EncdrConfig, Event, LedValue, PixelFormat};
+
+mod mk2_font;
+use mk2_font::draw_text;
 use midir::{MidiOutput, MidiOutputConnection};
 use midir::os::unix::VirtualOutput;
 use std::thread;
 use std::time::{Duration, Instant};
+
+
+fn render_midi_screens(
+    groupe: usize,
+    derniere_note: Option<(usize, u8, u8)>,
+    valeurs_cc: &[i32; 8],
+) -> (Vec<u8>, Vec<u8>) {
+    let mut left = vec![0u8; 2048];
+    let mut right = vec![0u8; 2048];
+
+    let lettre = "ABCDEFGH".chars().nth(groupe).unwrap_or('A');
+
+    draw_text(&mut left, 8, 5, "MASCHINE MK2 MIDI");
+    draw_text(&mut left, 8, 20, &format!("GROUPE: {}", lettre));
+
+    if let Some((pad, note, velocite)) = derniere_note {
+        draw_text(&mut left, 8, 35, &format!("PAD: {} NOTE: {}", pad, note));
+        draw_text(&mut left, 8, 50, &format!("VELOCITE: {}", velocite));
+    } else {
+        draw_text(&mut left, 8, 35, "AUCUNE NOTE");
+    }
+
+    for i in 0..8 {
+        let x = if i < 4 { 8 } else { 136 };
+        let y = 5 + (i % 4) * 15;
+
+        draw_text(
+            &mut right,
+            x,
+            y,
+            &format!("CC{}: {:03}", 20 + i, valeurs_cc[i]),
+        );
+    }
+
+    (left, right)
+}
 
 fn main() {
     let midi = MidiOutput::new("Maschine MK2")
@@ -71,6 +110,19 @@ fn main() {
     let mut valeurs_cc = [64i32; 8];
     let mut volume_midi = 100i32;
 	let mut last_led_update = Instant::now();
+    let mut derniere_note: Option<(usize, u8, u8)> = None;
+
+    // Affichage MIDI initial sur les deux écrans
+    let (left, right) =
+        render_midi_screens(groupe_actif, derniere_note, &valeurs_cc);
+
+    encdr.submit_screen_with_format(
+        device_id, "left", &left, PixelFormat::Mono
+    );
+    encdr.submit_screen_with_format(
+        device_id, "right", &right, PixelFormat::Mono
+    );
+
     
     loop {
         
@@ -137,6 +189,18 @@ fn main() {
             if pas != 0 {
                         valeurs_cc[i] = (valeurs_cc[i] + pas).clamp(0, 127);
 
+                        // Actualisation des CC sur les écrans
+                        if encdr.screen_backlog(device_id) <= 1 {
+                            let (left, right) =
+                                render_midi_screens(groupe_actif, derniere_note, &valeurs_cc);
+
+                            encdr.submit_screen_with_format(
+                                device_id, "right", &right, PixelFormat::Mono
+                            );
+                            let _ = left;
+                        }
+
+
 // CC 20 a 27, canal MIDI 1
                 let message = [
                             0xB0,
@@ -169,6 +233,16 @@ fn main() {
             if let Some(lettre) = name.strip_prefix("group_") {
             if let Some(index) = "hgfedcba".find(lettre) {
                             groupe_actif = index;
+
+                            // Actualisation du groupe sur l'ecran gauche
+                            if encdr.screen_backlog(device_id) <= 1 {
+                                let (left, _) =
+                                    render_midi_screens(groupe_actif, derniere_note, &valeurs_cc);
+                                encdr.submit_screen_with_format(
+                                    device_id, "left", &left, PixelFormat::Mono
+                                );
+                            }
+
 
                    println!(
                                 "Groupe {} selectionne : transposition {} demi-tons",
@@ -237,6 +311,19 @@ fn main() {
                     } else {
                         notes_actives[i] = true;
                         notes_jouees[i] = Some(note);
+
+                        // Memoriser et afficher la derniere note MIDI
+                        derniere_note = Some((i + 1, note, velocite));
+
+                        if encdr.screen_backlog(device_id) <= 1 {
+                            let (left, _) = render_midi_screens(
+                                groupe_actif, derniere_note, &valeurs_cc
+                            );
+                            encdr.submit_screen_with_format(
+                                device_id, "left", &left, PixelFormat::Mono
+                            );
+                        }
+
                         println!(
                             "Pad {} : note {} velocite {}",
                             i + 1,
