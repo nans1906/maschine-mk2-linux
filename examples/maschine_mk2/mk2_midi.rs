@@ -45,9 +45,9 @@ fn main() {
         device_id,
         &pad_name,
         LedValue::Rgb {
-		r: 255,
+		r: 0,
 		g: 0,
-		b: 0,
+		b: 255,
 },
     );
 }
@@ -60,7 +60,7 @@ fn main() {
 
     // Groupes A a H : decalages en demi-tons
     let decalages_groupes: [i16; 8] = [
-        0, 12, 24, 36, -12, -24, -36, 48
+        -36, -24, -12, 0, 12, 24, 36, 48
     ];
 
     // Groupe A selectionne au demarrage
@@ -68,7 +68,6 @@ fn main() {
 
     // Memoriser la note MIDI jouee par chaque pad
     let mut notes_jouees: [Option<u8>; 16] = [None; 16];
-
     let mut valeurs_cc = [64i32; 8];
     let mut volume_midi = 100i32;
 	let mut last_led_update = Instant::now();
@@ -76,7 +75,7 @@ fn main() {
     loop {
         
         if last_led_update.elapsed() >= Duration::from_millis(30) {
-    last_led_update = Instant::now();
+            last_led_update = Instant::now();
 
 		for i in 1..=16 {
         let pad_name = format!("pad_{}", i);
@@ -112,59 +111,44 @@ fn main() {
 
 
             // Mesurer la pression maximale pendant chaque frappe
-            if let Event::Grid { name, pressure, .. } = &event {
-                if let Some(numero) = name.strip_prefix("pad_") {
-                    if let Ok(pad) = numero.parse::<usize>() {
-                        if (1..=16).contains(&pad) && pad != 14 {
-                            let i = pad - 1;
-
-                            if let Some((_, maximum)) = frappes[i].as_mut() {
-                                *maximum = (*maximum).max(*pressure);
-                            }
-                        }
-                    }
-                }
-            }
-
             
             if let Event::EncoderFine { name, delta, .. } = &event {
 			// Gros potentiometre VOLUME : variations de +1 ou -1
-if *name == "screen_encoder_1" && delta.abs() == 1.0 {
-    volume_midi = (volume_midi + *delta as i32).clamp(0, 127);
+            if *name == "screen_encoder_1" && delta.abs() == 1.0 {
+                volume_midi = (volume_midi + *delta as i32).clamp(0, 127);
 
-    let message = [0xB0, 7, volume_midi as u8];
+                let message = [0xB0, 7, volume_midi as u8];
 
-    if let Err(e) = connexion.send(&message) {
-        eprintln!("Erreur MIDI volume : {}", e);
+            if let Err(e) = connexion.send(&message) {
+                    eprintln!("Erreur MIDI volume : {}", e);
     }
 
-    println!("VOLUME : CC 7 = {}", volume_midi);
+                    println!("VOLUME : CC 7 = {}", volume_midi);
 }
     
-    if let Some(numero) = name.strip_prefix("screen_encoder_") {
-        if let Ok(index) = numero.parse::<usize>() {
+            if let Some(numero) = name.strip_prefix("screen_encoder_") {
+            if let Ok(index) = numero.parse::<usize>() {
             if (1..=8).contains(&index) {
                 let i = index - 1;
+                 // Ignore les petites variations parasites
+            if delta.abs() >= 1.0 {
+                let pas = delta.signum() as i32;
 
-// Ignore les petites variations parasites
-                if delta.abs() >= 1.0 {
-                    let pas = delta.signum() as i32;
-
-                    if pas != 0 {
+            if pas != 0 {
                         valeurs_cc[i] = (valeurs_cc[i] + pas).clamp(0, 127);
 
-                        // CC 20 a 27, canal MIDI 1
-                        let message = [
+// CC 20 a 27, canal MIDI 1
+                let message = [
                             0xB0,
                             20 + i as u8,
                             valeurs_cc[i] as u8,
                         ];
 
-                        if let Err(e) = connexion.send(&message) {
-                            eprintln!("Erreur MIDI CC : {}", e);
+             if let Err(e) = connexion.send(&message) {
+                    eprintln!("Erreur MIDI CC : {}", e);
                         }
 
-                        println!(
+                    println!(
                             "Potentiometre {} : CC {} = {}",
                             index,
                             20 + i,
@@ -180,38 +164,39 @@ if *name == "screen_encoder_1" && delta.abs() == 1.0 {
             if let Event::Button { name, pressed, .. } = event {
 
                 // Selection des groupes A a H
-                if pressed {
-                    if let Some(lettre) = name.strip_prefix("group_") {
-                        if let Some(index) = "abcdefgh".find(lettre) {
+
+            if pressed {
+            if let Some(lettre) = name.strip_prefix("group_") {
+            if let Some(index) = "hgfedcba".find(lettre) {
                             groupe_actif = index;
 
-                            println!(
+                   println!(
                                 "Groupe {} selectionne : transposition {} demi-tons",
-                                lettre.to_uppercase(),
-                                decalages_groupes[groupe_actif]
+                            ("ABCDEFGH".chars().nth(groupe_actif).unwrap()),
+                            decalages_groupes[groupe_actif]
                             );
                         }
                     }
                 }
 
-				if name == "volume" {
+			if name == "volume" {
 				let valeur = if pressed { 127 } else { 0 };
 				let message = [0xB0, 64, valeur];
 
-				if let Err(e) = connexion.send(&message) {
+			if let Err(e) = connexion.send(&message) {
 				eprintln!("Erreur MIDI sustain : {}", e);
     }
 
-					println!("SUSTAIN : CC64 = {}", valeur);
+				println!("SUSTAIN : CC64 = {}", valeur);
 }
-                if let Some(numero) = name.strip_prefix("pad_") {
-                    if let Ok(pad) = numero.parse::<u8>() {
-                        if (1..=16).contains(&pad) && pad != 14 {
-                            let i = (pad - 1) as usize;
+             if let Some(numero) = name.strip_prefix("pad_") {
+             if let Ok(pad) = numero.parse::<u8>() {
+                       if (1..=16).contains(&pad) && pad != 14 {
+                       let i = (pad - 1) as usize;
 
-                           if pressed {
-                               if frappes[i].is_none() && !notes_actives[i] {
-                                   frappes[i] = Some((Instant::now(), 0.0));
+                        if pressed {
+                        if frappes[i].is_none() && !notes_actives[i] {
+                           frappes[i] = Some((Instant::now(), 0.0));
                                }
                            } else {
                                if let Some(note) = notes_jouees[i] {
@@ -231,7 +216,9 @@ if *name == "screen_encoder_1" && delta.abs() == 1.0 {
         }
 
         // Declencher les notes apres 8 ms de mesure de pression
+
         for i in 0..16 {
+
             // Le pad 14 est physiquement defectueux
             if i == 13 || notes_actives[i] {
                 continue;
